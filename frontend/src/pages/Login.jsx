@@ -211,7 +211,7 @@ export default function Login() {
           <p className="text-xs text-secondary">
             Don't have an analyst account yet?{' '}
             <Link to="/signup" className="text-cyan font-bold hover:underline">
-              Create free account
+              Create new account
             </Link>
           </p>
         </div>
