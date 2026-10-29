@@ -25,7 +25,7 @@ const users = new Map();
 /**
  * Helper to fetch a user by email from PostgreSQL or fallback cache
  */
-async function findUserByEmail(email) {
+export async function findUserByEmail(email) {
   const cleanEmail = email.toLowerCase().trim();
 
   if (isDatabaseConfigured) {
@@ -47,14 +47,102 @@ async function findUserByEmail(email) {
         users.set(cleanEmail, userObj); // sync memory cache
         return userObj;
       }
-
-
     } catch (e) {
       // Fall through to memory store
     }
   }
 
   return users.get(cleanEmail) || null;
+}
+
+/**
+ * Express middleware to strictly enforce Administrator role for sensitive endpoints
+ * (Dashboard metrics, investigation history, audit logs).
+ */
+export async function requireAdmin(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized: Authentication required to access administrative data.'
+      });
+    }
+
+    const rawToken = authHeader.split(' ')[1];
+    let user = null;
+
+    // Check if token is an API key (e.g. iltk_live_admin_...)
+    if (rawToken.startsWith('iltk_')) {
+      if (isDatabaseConfigured) {
+        try {
+          const dbRes = await query('SELECT * FROM public.users WHERE api_key = $1 LIMIT 1;', [rawToken]);
+          if (dbRes.rows?.[0]) {
+            const row = dbRes.rows[0];
+            user = {
+              id: row.id,
+              name: row.name,
+              email: row.email,
+              role: row.role,
+              organization: row.organization,
+              apiKey: row.api_key
+            };
+          }
+        } catch (e) {}
+      }
+      if (!user) {
+        for (const u of users.values()) {
+          if (u.apiKey === rawToken) {
+            user = u;
+            break;
+          }
+        }
+      }
+    } else {
+      // Decode Base64 JSON session token
+      let payload;
+      try {
+        payload = JSON.parse(Buffer.from(rawToken, 'base64').toString('utf8'));
+      } catch {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid authorization token format.'
+        });
+      }
+
+      if (!payload?.email || (payload.exp && payload.exp < Date.now())) {
+        return res.status(401).json({
+          success: false,
+          error: 'Session expired or invalid. Please sign in again.'
+        });
+      }
+
+      user = await findUserByEmail(payload.email);
+    }
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: 'User account not recognized or deleted.'
+      });
+    }
+
+    const normalizedRole = (user.role || '').toLowerCase().trim();
+    if (normalizedRole !== 'administrator' && normalizedRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied: Dashboard and investigation logs are restricted to Administrator accounts only.'
+      });
+    }
+
+    req.user = user;
+    return next();
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Authorization check failed.'
+    });
+  }
 }
 
 /**

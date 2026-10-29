@@ -33,18 +33,25 @@ export default function Login() {
   const [resetLoading, setResetLoading] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { login, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const redirectPath = location.state?.from || '/dashboard';
+  const getRedirectDestination = (isAdminUser) => {
+    const from = location.state?.from;
+    if (from && (from.startsWith('/dashboard') || from.startsWith('/logs') || from.startsWith('/history'))) {
+      return isAdminUser ? from : '/integrated-lookup';
+    }
+    if (from) return from;
+    return isAdminUser ? '/dashboard' : '/integrated-lookup';
+  };
 
   // Automatically redirect if already authenticated
   React.useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      navigate(redirectPath, { replace: true });
+      navigate(getRedirectDestination(isAdmin), { replace: true });
     }
-  }, [isAuthenticated, authLoading, navigate, redirectPath]);
+  }, [isAuthenticated, authLoading, navigate, isAdmin]);
 
   React.useEffect(() => {
     const handleKeyDown = (e) => {
@@ -66,8 +73,9 @@ export default function Login() {
     try {
       setLoading(true);
       setError(null);
-      await login(email.trim(), password);
-      navigate(redirectPath, { replace: true });
+      const res = await login(email.trim(), password);
+      const isUserAdmin = res?.user?.role === 'Administrator' || res?.user?.role?.toLowerCase() === 'admin';
+      navigate(getRedirectDestination(isUserAdmin), { replace: true });
     } catch (err) {
       setError(err.message || 'Invalid email or password.');
     } finally {

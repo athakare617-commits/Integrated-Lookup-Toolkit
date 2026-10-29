@@ -1,7 +1,11 @@
 import { Router } from 'express';
 import { getHistory, deleteHistoryRecord, clearAllHistory, getDashboardStats } from '../config/supabase.js';
+import { requireAdmin } from './authRoutes.js';
 
 const router = Router();
+
+// Strictly restrict all history and dashboard stats routes to Administrator accounts only
+router.use(requireAdmin);
 
 // GET /api/history?search=&type=&limit=
 router.get('/history', async (req, res, next) => {

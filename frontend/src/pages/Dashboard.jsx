@@ -34,11 +34,13 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 import AccuracyModal from '../components/AccuracyModal';
 
 export default function Dashboard() {
+  const { isAdmin } = useAuth();
   const [stats, setStats] = useState(null);
   const [recentLookups, setRecentLookups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -118,14 +120,16 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (isAdmin) {
+      loadDashboardData();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
-    if (activeTab === 'logs') {
+    if (isAdmin && activeTab === 'logs') {
       loadLogsData();
     }
-  }, [activeTab, logsTypeFilter]);
+  }, [isAdmin, activeTab, logsTypeFilter]);
 
   const handleQuickLookup = (type, query) => {
     navigate('/integrated-lookup', {
@@ -279,6 +283,26 @@ export default function Dashboard() {
     }
     return true;
   });
+
+  if (!isAdmin) {
+    return (
+      <div className="dashboard-page flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
+        <div className="cyber-card max-w-lg p-8 border-rose-500/40 text-center mx-auto my-12">
+          <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-500 mx-auto mb-4">
+            <AlertCircle size={32} />
+          </div>
+          <h2 className="text-xl font-bold text-white mb-2">Administrator Access Required</h2>
+          <p className="text-secondary text-sm mb-6 leading-relaxed">
+            The SOC Dashboard metrics, activity telemetry, and system log details are restricted exclusively to Administrator accounts.
+          </p>
+          <Link to="/integrated-lookup" className="btn btn-primary inline-flex items-center gap-2">
+            <Layers size={16} />
+            <span>Go to Integrated Lookup</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dashboard-page">

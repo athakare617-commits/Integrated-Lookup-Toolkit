@@ -32,15 +32,15 @@ export default function Signup() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const { register, isAuthenticated, loading: authLoading } = useAuth();
+  const { register, isAuthenticated, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
 
   // Automatically redirect if already authenticated
   React.useEffect(() => {
     if (!authLoading && isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate(isAdmin ? '/dashboard' : '/integrated-lookup', { replace: true });
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, navigate, isAdmin]);
 
   // Password strength calculation
   const calculateStrength = (pass) => {
@@ -90,7 +90,7 @@ export default function Signup() {
     try {
       setLoading(true);
       setError(null);
-      await register({
+      const res = await register({
         name: name.trim(),
         email: email.trim(),
         password,
@@ -98,7 +98,8 @@ export default function Signup() {
         organization: organization.trim() || (role === 'Administrator' ? 'Cyber Defense Operations' : 'Independent'),
         adminSecretKey: role === 'Administrator' ? adminSecretKey.trim() : undefined
       });
-      navigate('/dashboard');
+      const isUserAdmin = res?.user?.role === 'Administrator' || role === 'Administrator';
+      navigate(isUserAdmin ? '/dashboard' : '/integrated-lookup', { replace: true });
     } catch (err) {
       setError(err.message || 'Registration failed.');
     } finally {

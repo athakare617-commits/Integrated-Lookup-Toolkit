@@ -13,19 +13,26 @@ import {
   Menu,
   FileText
 } from 'lucide-react';
-
-const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/dashboard?tab=logs', label: 'Activity Logs', icon: FileText },
-  { path: '/integrated-lookup', label: 'Integrated Lookup', icon: Layers, highlight: true },
-  { path: '/history', label: 'Lookup History', icon: History },
-  { path: '/api-docs', label: 'API Documentation', icon: Code2 },
-  { path: '/profile', label: 'Analyst Profile', icon: User },
-  { path: '/about', label: 'About & Help', icon: Info },
-];
+import { useAuth } from '../context/AuthContext';
 
 export default function Sidebar({ isHidden, onToggle, isOpen, onClose }) {
+  const { isAdmin } = useAuth();
   const location = useLocation();
+
+  const adminNavItems = [
+    { path: '/dashboard', label: 'SOC Dashboard', icon: LayoutDashboard, badge: 'ADMIN' },
+    { path: '/dashboard?tab=logs', label: 'Activity Logs', icon: FileText },
+    { path: '/history', label: 'Lookup History', icon: History },
+  ];
+
+  const generalNavItems = [
+    { path: '/integrated-lookup', label: 'Integrated Lookup', icon: Layers, highlight: true },
+    { path: '/api-docs', label: 'API Documentation', icon: Code2 },
+    { path: '/profile', label: 'Analyst Profile', icon: User },
+    { path: '/about', label: 'About & Help', icon: Info },
+  ];
+
+  const navItems = isAdmin ? [...adminNavItems, ...generalNavItems] : generalNavItems;
 
   const isItemActive = (itemPath) => {
     if (itemPath.includes('?')) {

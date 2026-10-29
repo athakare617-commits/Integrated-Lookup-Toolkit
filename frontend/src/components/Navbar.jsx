@@ -4,7 +4,7 @@ import { Menu, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onToggleSidebar, isSidebarHidden, isSidebarOpen }) {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
 
   return (
     <header className="cyber-navbar">
@@ -20,7 +20,7 @@ export default function Navbar({ onToggleSidebar, isSidebarHidden, isSidebarOpen
             <Menu size={20} />
           </button>
         )}
-        <Link to={isAuthenticated ? "/dashboard" : "/login"} className="navbar-brand" style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link to={isAuthenticated ? (isAdmin ? "/dashboard" : "/integrated-lookup") : "/login"} className="navbar-brand" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div className="navbar-brand-icon">
             <Shield size={20} className="text-cyan" />
           </div>

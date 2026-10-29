@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   ShieldAlert,
   Users,
-  Database
+  Database,
+  Layers
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -155,14 +156,23 @@ export default function Profile() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
-            <Link to="/history" className="btn btn-secondary text-xs flex-1 sm:flex-none justify-center">
-              <History size={14} />
-              <span>My Investigation History</span>
-            </Link>
-            <Link to="/dashboard" className="btn btn-primary text-xs flex-1 sm:flex-none justify-center">
-              <Activity size={14} />
-              <span>Open Dashboard</span>
-            </Link>
+            {user.role === 'Administrator' ? (
+              <>
+                <Link to="/history" className="btn btn-secondary text-xs flex-1 sm:flex-none justify-center">
+                  <History size={14} />
+                  <span>Audit Logs & History</span>
+                </Link>
+                <Link to="/dashboard" className="btn btn-primary text-xs flex-1 sm:flex-none justify-center">
+                  <Activity size={14} />
+                  <span>Open SOC Dashboard</span>
+                </Link>
+              </>
+            ) : (
+              <Link to="/integrated-lookup" className="btn btn-primary text-xs flex-1 sm:flex-none justify-center">
+                <Layers size={14} />
+                <span>Open Integrated Lookup</span>
+              </Link>
+            )}
           </div>
         </div>
       </div>

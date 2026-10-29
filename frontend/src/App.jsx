@@ -19,7 +19,7 @@ import Profile from './pages/Profile';
 import ApiDocs from './pages/ApiDocs';
 
 function AppContent() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
   const [isSidebarHidden, setIsSidebarHidden] = useState(() => {
     try {
       return localStorage.getItem('sidebar_hidden') === 'true';
@@ -113,12 +113,12 @@ function AppContent() {
 
         <main className="content-container">
           <Routes>
-            {/* Primary Entrance: Unauthenticated visitors see Login directly; authenticated go to Dashboard */}
+            {/* Primary Entrance: Unauthenticated -> Login; Admin -> Dashboard; Regular Analyst -> Integrated Lookup */}
             <Route
               path="/"
               element={
                 isAuthenticated ? (
-                  <Navigate to="/dashboard" replace />
+                  <Navigate to={isAdmin ? "/dashboard" : "/integrated-lookup"} replace />
                 ) : (
                   <Navigate to="/login" replace />
                 )
@@ -129,11 +129,11 @@ function AppContent() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
 
-            {/* STRICTLY PROTECTED WORKSPACE - No one can access or work without login */}
+            {/* STRICTLY ADMIN-ONLY ROUTES: Dashboard & Investigation Logs */}
             <Route
               path="/dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute adminOnly>
                   <Dashboard />
                 </ProtectedRoute>
               }
@@ -141,11 +141,21 @@ function AppContent() {
             <Route
               path="/logs"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute adminOnly>
                   <Navigate to="/dashboard?tab=logs" replace />
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/history"
+              element={
+                <ProtectedRoute adminOnly>
+                  <History />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* WORKSPACE MODULES: Accessible to all authenticated users */}
             <Route
               path="/integrated-lookup"
               element={
@@ -205,15 +215,7 @@ function AppContent() {
               }
             />
 
-            {/* Protected Investigation History, Forensics, Profile & Documentation */}
-            <Route
-              path="/history"
-              element={
-                <ProtectedRoute>
-                  <History />
-                </ProtectedRoute>
-              }
-            />
+            {/* Protected Analyst Profile & Documentation */}
             <Route
               path="/profile"
               element={
@@ -247,12 +249,12 @@ function AppContent() {
               }
             />
 
-            {/* Catch-all route: sends unauthenticated users to /login and authenticated to /dashboard */}
+            {/* Catch-all route: sends unauthenticated users to /login, admin to /dashboard, non-admin to /integrated-lookup */}
             <Route
               path="*"
               element={
                 isAuthenticated ? (
-                  <Navigate to="/dashboard" replace />
+                  <Navigate to={isAdmin ? "/dashboard" : "/integrated-lookup"} replace />
                 ) : (
                   <Navigate to="/login" replace />
                 )

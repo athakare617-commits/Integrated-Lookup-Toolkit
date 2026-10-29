@@ -105,12 +105,21 @@ export function AuthProvider({ children }) {
     return updated;
   };
 
+  const isAdmin = Boolean(
+    user && (
+      user.role === 'Administrator' ||
+      user.role?.toLowerCase() === 'admin' ||
+      user.role?.toLowerCase() === 'administrator'
+    )
+  );
+
   return (
     <AuthContext.Provider
       value={{
         user,
         token,
         isAuthenticated: Boolean(user),
+        isAdmin,
         loading,
         login,
         register,

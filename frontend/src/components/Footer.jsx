@@ -1,8 +1,11 @@
 import React from 'react';
 import { ShieldCheck, ExternalLink, BookOpen, Terminal } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Footer() {
+  const auth = useAuth();
+  const isAdmin = auth?.isAdmin;
   return (
     <footer className="cyber-footer">
       <div className="footer-content">
@@ -37,7 +40,8 @@ export default function Footer() {
         <div className="footer-col">
           <div className="footer-heading">SYSTEM & ARCHITECTURE</div>
           <ul className="footer-links">
-            <li><Link to="/history">Lookup History</Link></li>
+            {isAdmin && <li><Link to="/history">Lookup History & Logs</Link></li>}
+            {isAdmin && <li><Link to="/dashboard">SOC Security Dashboard</Link></li>}
             <li><Link to="/about">Architecture & Stack</Link></li>
             <li><Link to="/about">DNS Record Reference</Link></li>
             <li><a href="https://supabase.com" target="_blank" rel="noopener noreferrer">Supabase PostgreSQL <ExternalLink size={12} /></a></li>
